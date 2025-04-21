@@ -132,7 +132,7 @@ module memory_tb;
         // write 16'h8123 (negative if signed) into memory and read it signed
 
         CS = 1; WE = 1;
-        DATA_ADDR = 20'h40;
+        DATA_ADDR = 20'h70;
         DATA_SIZE = 2'b01; // halfword
         data_drive = 32'h00008123; 
 
@@ -148,7 +148,7 @@ module memory_tb;
         $display("SIGNED HALFWORD READ PASSED: %h", DATA_BUS);
 
         // --------------------
-        // TEST 6: Instruction fetch
+        // TEST 6: Simultaneous Data and Instruction fetch
         // --------------------
         // Assume $readmemh loaded 0x12345678 into location 0x50
         // manually write into RAM to simulate this if needed
@@ -159,10 +159,17 @@ module memory_tb;
         uut.RAM[83] = 8'h12;
 
         INSTR_ADDR = 20'h50;
+        DATA_ADDR = 20'h41;
 
-        @(negedge CLK); @(negedge CLK);
+        CS = 1; WE = 0;
+        DATA_SIZE = 2'b00;
+        data_drive = 32'b0;
+        
+        SIGNED = 1; // signed read
+        @(negedge CLK); #1;
 
         if (INSTR_BUS !== 32'h12345678) $fatal("INSTRUCTION FETCH FAILED: got %h", INSTR_BUS);
+        if (DATA_BUS !== 32'hFFFFFF80) $fatal("SIGNED BYTE READ FAILED: got %h", DATA_BUS);
         $display("INSTRUCTION FETCH PASSED: %h", INSTR_BUS);
 
         $display("All tests passed!");
