@@ -1,12 +1,11 @@
-module dataMemory(WE, CLK, ADDR, BUS, DATA_SIZE, SIGNED);
+module dataMemory(WE, CLK, ADDR, DATA_IN, DATA_SIZE, SIGNED, DATA_OUT);
     input WE;
     input CLK;
     input [15:0] ADDR;
-    inout [31:0] BUS;
+    input [31:0] DATA_IN;
     input [1:0] DATA_SIZE; // 00 = byte, 01 = halfword, 10 = word
     input SIGNED; // 0 = unsigned, 1 = signed
-
-    reg [31:0] data_out;
+    output reg [31:0] DATA_OUT;
     reg [7:0] RAM [0:65535];
 
     // initialize memory with the data
@@ -20,35 +19,33 @@ module dataMemory(WE, CLK, ADDR, BUS, DATA_SIZE, SIGNED);
     end
 
     // actual memory logic
-    assign BUS = (WE == 1'b1) ? 32'bZ : data_out;
     always @(negedge CLK)
     begin
         // NOTE: This implementation is different from LC-3b.
         // All the rotation logic is built into memory. Just input the address, data, and WE signal.
         if (WE == 1'b1) begin
             case (DATA_SIZE) 
-                2'b00: RAM[ADDR] <= BUS[7:0]; // byte store
+                2'b00: RAM[ADDR] <= DATA_IN[7:0]; // byte store
                 2'b01: begin // halfword store
-                    RAM[ADDR] <= BUS[7:0];
-                    RAM[ADDR+1] <= BUS[15:8];
+                    RAM[ADDR] <= DATA_IN[7:0];
+                    RAM[ADDR+1] <= DATA_IN[15:8];
                 end
                 2'b10: begin // word store
-                    RAM[ADDR] <= BUS[7:0];
-                    RAM[ADDR+1] <= BUS[15:8];
-                    RAM[ADDR+2] <= BUS[23:16];
-                    RAM[ADDR+3] <= BUS[31:24];
+                    RAM[ADDR] <= DATA_IN[7:0];
+                    RAM[ADDR+1] <= DATA_IN[15:8];
+                    RAM[ADDR+2] <= DATA_IN[23:16];
+                    RAM[ADDR+3] <= DATA_IN[31:24];
                 end
                 default: $fatal("INVALID DATA SIZE"); 
             endcase
+        end else begin
+            case (DATA_SIZE)
+                2'b00: DATA_OUT <= SIGNED ? {{24{RAM[ADDR][7]}}, RAM[ADDR]} : {24'b0, RAM[ADDR]};
+                2'b01: DATA_OUT <= SIGNED ? {{16{RAM[ADDR+1][7]}}, RAM[ADDR+1], RAM[ADDR]} : {16'b0, RAM[ADDR+1], RAM[ADDR]};
+                2'b10: DATA_OUT <= {RAM[ADDR+3], RAM[ADDR+2], RAM[ADDR+1], RAM[ADDR]};
+                default: $fatal("INVALID DATA SIZE"); 
+            endcase
         end
-
-        case (DATA_SIZE)
-            2'b00: data_out <= SIGNED ? {{24{RAM[ADDR][7]}}, RAM[ADDR]} : {24'b0, RAM[ADDR]};
-            2'b01: data_out <= SIGNED ? {{16{RAM[ADDR+1][7]}}, RAM[ADDR+1], RAM[ADDR]} : {16'b0, RAM[ADDR+1], RAM[ADDR]};
-            2'b10: data_out <= {RAM[ADDR+3], RAM[ADDR+2], RAM[ADDR+1], RAM[ADDR]};
-            default: $fatal("INVALID DATA SIZE"); 
-        endcase
-            
         // instr_out <= {RAM[INSTR_ADDR+3], RAM[INSTR_ADDR+2], RAM[INSTR_ADDR+1], RAM[INSTR_ADDR]};
     end
 endmodule
