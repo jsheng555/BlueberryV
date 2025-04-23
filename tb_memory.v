@@ -1,179 +1,105 @@
-`timescale 1ns / 1ps
+`timescale 1ns/1ps
 
 module memory_tb;
 
-    reg CS;
-    reg WE;
     reg CLK;
-    reg [19:0] DATA_ADDR, INSTR_ADDR;
+    reg WE;
+    reg [15:0] ADDR;
+    wire [31:0] BUS;
     reg [1:0] DATA_SIZE;
     reg SIGNED;
-    wire [31:0] DATA_BUS;
-    wire [31:0] INSTR_BUS;
-    reg [31:0] data_drive;
 
-    // Bus trickery: drive only during writes
-    assign DATA_BUS = (CS && WE) ? data_drive : 32'bZ;
+    wire [31:0] INSTR;
 
-    // Instantiate your memory module
-    memory uut (
-        .CS(CS),
+    reg [31:0] bus_driver;
+    assign BUS = (WE) ? bus_driver : 32'bz;
+
+    dataMemory data_mem(
         .WE(WE),
         .CLK(CLK),
-        .INSTR_ADDR(INSTR_ADDR),
-        .DATA_ADDR(DATA_ADDR),
+        .ADDR(ADDR),
+        .BUS(BUS),
         .DATA_SIZE(DATA_SIZE),
-        .SIGNED(SIGNED),
-        .DATA_BUS(DATA_BUS),
-        .INSTR_BUS(INSTR_BUS)
+        .SIGNED(SIGNED)
     );
 
-    // Clock generation
+    instrMemory instr_mem(
+        .CLK(CLK),
+        .ADDR(ADDR),
+        .INSTR(INSTR)
+    );
+
+    integer errors;
+
     initial begin
         CLK = 0;
-        forever #5 CLK = ~CLK; // 10ns period
-    end
+        errors = 0;
 
-    // Test procedure
-    initial begin
-        $display("Starting memory testbench...");
-        
-        CS = 0; WE = 0;
-        DATA_ADDR = 0;
-        INSTR_ADDR = 0;
-        DATA_SIZE = 2'b00;
-        SIGNED = 0;
-        data_drive = 32'b0;
+        // Test Data Memory - All DATA_SIZE and SIGNED combinations
+        WE = 1;
+        // Write known pattern
 
-        // Let memory initialize
-        #20;
+        // BYTE
+        ADDR = 16'h0000; bus_driver = 32'h000000AB; DATA_SIZE = 2'b00; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
 
-        // --------------------
-        // TEST 1: Byte write/read
-        // --------------------
-        CS = 1; WE = 1; // enable, write
-        DATA_ADDR = 20'h13;
-        DATA_SIZE = 2'b00; // byte
-        data_drive = 32'h000000AA; // Only low 8 bits used
+        // HALFWORD
+        ADDR = 16'h0010; bus_driver = 32'h0000CDEF; DATA_SIZE = 2'b01; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
 
-        @(negedge CLK); #1;
+        // WORD
+        ADDR = 16'h0020; bus_driver = 32'h12345678; DATA_SIZE = 2'b10; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
 
-        CS = 1; WE = 0; // now read
-        data_drive = 32'b0; // stop driving
-        
-        SIGNED = 0; // unsigned read
-        @(negedge CLK); #1;
+        // Now read back (WE=0)
+        WE = 0;
 
-        if (DATA_BUS !== 32'h000000AA) $fatal("BYTE READ FAILED: got %h", DATA_BUS);
-        $display("BYTE READ PASSED: %h", DATA_BUS);
+        // BYTE UNSIGNED
+        ADDR = 16'h0000; DATA_SIZE = 2'b00; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== 32'h000000AB) begin $display("BYTE UNSIGNED FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        // --------------------
-        // TEST 2: Halfword write/read
-        // --------------------
-        CS = 1; WE = 1;
-        DATA_ADDR = 20'h22;
-        DATA_SIZE = 2'b01; // halfword
-        data_drive = 32'h0000BEEF; // only low 16 bits used
+        // BYTE SIGNED
+        ADDR = 16'h0000; DATA_SIZE = 2'b00; SIGNED = 1; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== {32'hFFFFFFAB}) begin $display("BYTE SIGNED FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        @(negedge CLK); #1;
+        // HALFWORD UNSIGNED
+        ADDR = 16'h0010; DATA_SIZE = 2'b01; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== 32'h0000CDEF) begin $display("HALFWORD UNSIGNED FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        CS = 1; WE = 0;
-        data_drive = 32'b0;
+        // HALFWORD SIGNED
+        ADDR = 16'h0010; DATA_SIZE = 2'b01; SIGNED = 1; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== {32'hFFFFCDEF}) begin $display("HALFWORD SIGNED FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        SIGNED = 0;
-        @(negedge CLK); #1;
+        // WORD (SIGNED/UNSIGNED doesn't matter for full word)
+        ADDR = 16'h0020; DATA_SIZE = 2'b10; SIGNED = 0; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== 32'h12345678) begin $display("WORD FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        if (DATA_BUS !== 32'h0000BEEF) $fatal("HALFWORD READ FAILED: got %h", DATA_BUS);
-        $display("HALFWORD READ PASSED: %h", DATA_BUS);
+        ADDR = 16'h0020; DATA_SIZE = 2'b10; SIGNED = 1; #5 CLK = 0; #5 CLK = 1;
+        if (BUS !== 32'h12345678) begin $display("WORD SIGNED FAILED: BUS=%h", BUS); errors = errors + 1; end
 
-        // --------------------
-        // TEST 3: Word write/read
-        // --------------------
-        CS = 1; WE = 1;
-        DATA_ADDR = 20'h34;
-        DATA_SIZE = 2'b10; // word
-        data_drive = 32'hDEADBEEF;
 
-        @(negedge CLK); #1;
+        // Test Instruction Memory - Write manually to file or pre-fill RAM
+        // Assume contents: address 0x1000 = 0xDEADBEEF
 
-        CS = 1; WE = 0;
-        data_drive = 32'b0;
+        // Check instruction fetch
+        ADDR = 16'h0000; #5 CLK = 0; #5 CLK = 1;
+        if (INSTR !== 32'hDEADBEEF) begin
+            $display("INSTRUCTION MEMORY FAILED: INSTR=%h", INSTR);
+            errors = errors + 1;
+        end
 
-        SIGNED = 0;
-        @(negedge CLK); #1;
+        ADDR = 16'h0004; #5 CLK = 0; #5 CLK = 1;
+        if (INSTR !== 32'hCAFEBABE) begin
+            $display("INSTRUCTION MEMORY FAILED: INSTR=%h", INSTR);
+            errors = errors + 1;
+        end
 
-        if (DATA_BUS !== 32'hDEADBEEF) $fatal("WORD READ FAILED: got %h", DATA_BUS);
-        $display("WORD READ PASSED: %h", DATA_BUS);
 
-        // --------------------
-        // TEST 4: Sign-extended read
-        // --------------------
-        // write 8'h80 (negative if signed) into memory and read it signed
+        if (errors == 0)
+            $display("ALL TESTS PASSED");
+        else
+            $display("TEST FAILED WITH %0d ERRORS", errors);
 
-        CS = 1; WE = 1;
-        DATA_ADDR = 20'h41;
-        DATA_SIZE = 2'b00; // byte
-        data_drive = 32'h00000080; // 8'b10000000 => -128 in signed
-
-        @(negedge CLK); #1;
-
-        CS = 1; WE = 0;
-        data_drive = 32'b0;
-        
-        SIGNED = 1; // signed read
-        @(negedge CLK); #1;
-
-        if (DATA_BUS !== 32'hFFFFFF80) $fatal("SIGNED BYTE READ FAILED: got %h", DATA_BUS);
-        $display("SIGNED BYTE READ PASSED: %h", DATA_BUS);
-
-        // --------------------
-        // TEST 5: Sign-extended read
-        // --------------------
-        // write 16'h8123 (negative if signed) into memory and read it signed
-
-        CS = 1; WE = 1;
-        DATA_ADDR = 20'h70;
-        DATA_SIZE = 2'b01; // halfword
-        data_drive = 32'h00008123; 
-
-        @(negedge CLK); #1;
-
-        CS = 1; WE = 0;
-        data_drive = 32'b0;
-        
-        SIGNED = 1; // signed read
-        @(negedge CLK); #1;
-
-        if (DATA_BUS !== 32'hFFFF8123) $fatal("SIGNED HALFWORD READ FAILED: got %h", DATA_BUS);
-        $display("SIGNED HALFWORD READ PASSED: %h", DATA_BUS);
-
-        // --------------------
-        // TEST 6: Simultaneous Data and Instruction fetch
-        // --------------------
-        // Assume $readmemh loaded 0x12345678 into location 0x50
-        // manually write into RAM to simulate this if needed
-
-        uut.RAM[80] = 8'h78; // address 0x50
-        uut.RAM[81] = 8'h56;
-        uut.RAM[82] = 8'h34;
-        uut.RAM[83] = 8'h12;
-
-        INSTR_ADDR = 20'h50;
-        DATA_ADDR = 20'h41;
-
-        CS = 1; WE = 0;
-        DATA_SIZE = 2'b00;
-        data_drive = 32'b0;
-        
-        SIGNED = 1; // signed read
-        @(negedge CLK); #1;
-
-        if (INSTR_BUS !== 32'h12345678) $fatal("INSTRUCTION FETCH FAILED: got %h", INSTR_BUS);
-        if (DATA_BUS !== 32'hFFFFFF80) $fatal("SIGNED BYTE READ FAILED: got %h", DATA_BUS);
-        $display("INSTRUCTION FETCH PASSED: %h", INSTR_BUS);
-
-        $display("All tests passed!");
         $finish;
     end
+
+    // always #5 CLK = ~CLK;
 
 endmodule
