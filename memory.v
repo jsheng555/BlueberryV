@@ -36,14 +36,14 @@ module dataMemory(WE, CLK, ADDR, DATA_IN, DATA_SIZE, SIGNED, DATA_OUT);
                     RAM[ADDR+2] <= DATA_IN[23:16];
                     RAM[ADDR+3] <= DATA_IN[31:24];
                 end
-                default: $fatal("INVALID DATA SIZE"); 
+                // default: $fatal("INVALID DATA SIZE"); 
             endcase
         end else begin
             case (DATA_SIZE)
                 2'b00: DATA_OUT <= SIGNED ? {{24{RAM[ADDR][7]}}, RAM[ADDR]} : {24'b0, RAM[ADDR]};
                 2'b01: DATA_OUT <= SIGNED ? {{16{RAM[ADDR+1][7]}}, RAM[ADDR+1], RAM[ADDR]} : {16'b0, RAM[ADDR+1], RAM[ADDR]};
                 2'b10: DATA_OUT <= {RAM[ADDR+3], RAM[ADDR+2], RAM[ADDR+1], RAM[ADDR]};
-                default: $fatal("INVALID DATA SIZE"); 
+                // default: $fatal("INVALID DATA SIZE"); 
             endcase
         end
         // instr_out <= {RAM[INSTR_ADDR+3], RAM[INSTR_ADDR+2], RAM[INSTR_ADDR+1], RAM[INSTR_ADDR]};

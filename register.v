@@ -15,7 +15,8 @@ module register(CLK, RegW, DR, SR1, SR2, Reg_In, ReadReg1, ReadReg2);
   integer j;
   initial begin
     for (j = 0 ; j < 32 ; j = j + 1) begin
-      REG[j] = 32'h0000000;
+      // REG[j] = 32'h0000000;
+      REG[j] = j;
     end
   end
 
