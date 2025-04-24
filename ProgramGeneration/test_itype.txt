@@ -1,0 +1,16 @@
+; test a couple i-type instructions.
+; not as extensive as r-type since they only differ by one mux
+; also test nops and dependencies
+000000000000 00001 111 00001 0010011 ; andi x1, x1, 0
+111111111111 00010 100 00010 0010011 ; xori x2, x2, -1
+000000000100 00011 001 00011 0010011 ; sll x3, x3, 4
+000000001010 00100 000 00100 0010011 ; addi x4, x4, 10
+000000000000 00000 000 00000 0010011 ; nop 
+000000000000 00000 000 00000 0010011 ; nop
+000000000000 00000 000 00000 0010011 ; nop
+111111111110 00100 000 00100 0010011 ; addi x4, x4, -2 - dependency
+; expected register values
+; x1 = 0
+; x2 = 0xFFFFFFFFD
+; x3 = 0x30
+; x4 = 12
