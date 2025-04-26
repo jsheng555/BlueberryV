@@ -17,6 +17,8 @@ module alu(A, B, opcode, funct3, funct7, result);
         else if (opcode == 7'b0000011) result = A + B; // Address generation for loads
         else if (opcode == 7'b0100011) result = A + B; // Address generation for stores
         else if (opcode == 7'b1100011) result = A + B; // Address generation for branches
+        else if (opcode == 7'b1101111) result = A + B; // Address generation for jal
+        else if (opcode == 7'b1100111) result = A + B; // Address generation for jalr
         else begin
             case (funct3) 
             3'h0: result = (funct7 == 7'h20) ? A - B : A + B;

@@ -276,7 +276,7 @@ module execute_stage(CLK, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, EX_RD, EX_RS1, EX_R
         ME_F3 <= EX_F3;
         ME_RD <= EX_RD;
         ME_ALU_RE <= ALU_result;
-        ME_BRT <= CMP_out;
+        ME_BRT <= CMP_out || EX_LINK;
         ME_NPC <= EX_PC + 4;
         ME_RS2 <= EX_RS2;
         ME_TYPE <= EX_TYPE;
