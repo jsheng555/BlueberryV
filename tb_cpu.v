@@ -32,6 +32,24 @@ module cpu_tb();
                 $display("Register %d: %x", j, CPU.RF.REG[j]);
             end
             `endif
+
+            if (CPU.WB_TYPE == 7'd7 && CPU.WB_V) begin // kind of a hacky way to stop the program
+                #10; // finish current instruction
+
+                `ifdef DEBUG_DATA_MEM
+                $display("\nDATA MEMORY");
+                for (i = 254 ; i < 256+12 ; i = i + 1) begin
+                    $display("Loc %d: %x", i, CPU.MS.DM.RAM[i]);
+                end
+                `endif
+
+                $display("\nREGISTER FILE AT END OF PROGRAM");
+                for (i = 0 ; i < 32 ; i = i + 1) begin
+                    $display("Register %d: %x", i, CPU.RF.REG[i]);
+                end
+
+                $stop;
+            end
             #10;
         end
         

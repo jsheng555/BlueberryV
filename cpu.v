@@ -180,7 +180,7 @@ module decode_stage(CLK, DE_V, DE_IR, DE_PC, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, 
 
     // next stage latches
     always @ (posedge CLK) begin
-        EX_V <= 1;
+        EX_V <= DE_V;
         EX_IMM <= imm;
         EX_F3 <= DE_IR[14:12];
         EX_F7 <= DE_IR[31:25];
@@ -272,7 +272,7 @@ module execute_stage(CLK, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, EX_RD, EX_RS1, EX_R
 
     // Latches
     always @ (posedge CLK) begin
-        ME_V <= 1;
+        ME_V <= EX_V;
         ME_F3 <= EX_F3;
         ME_RD <= EX_RD;
         ME_ALU_RE <= ALU_result;
@@ -335,7 +335,7 @@ module memory_stage(CLK, ME_V, ME_F3, ME_RD, ME_ALU_RE, ME_NPC, ME_RS2, ME_TYPE,
 
     // Latches
     always @ (posedge CLK) begin
-        WB_V <= 1;
+        WB_V <= ME_V;
         WB_RD <= ME_RD;
         WB_ALU_RE <= ME_ALU_RE;
         WB_MEM_RE <= DATA_OUT;
