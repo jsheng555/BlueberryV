@@ -1,0 +1,20 @@
+; this program tests loads and stores. 
+lui x1, 0xedcba
+addi x1, x1, 0x321
+andi x22, x22, 0
+addi x22, x22, 0x100
+sw x1, 0(x22)
+sh x1, 4(x22)
+sb x1, 5(x22)
+sb x1, 6(x22)
+; memory = 21 a3 cb ed 21 a3 21 21 
+lw x3, 0(x22) ; expected: edcba321 
+lw x4, 4(x22) ; expected: 2121a321 
+lh x5, 2(x22) ; expected: ffffedcb 
+lh x6, 6(x22) ; expected: 00002121 
+lb x7, 1(x22) ; expected: ffffffa3 
+lb x8, 4(x22) ; expected: 00000021 
+lhu x9, 2(x22) ; expected: 0000edcb 
+lhu x10, 6(x22) ; expected: 00002121 
+lbu x11, 1(x22) ; expected: 000000a3 
+lbu x12, 4(x22) ; expected: 00000021 
