@@ -1,0 +1,27 @@
+; this program tests jal, jalr, and u-type instructions.
+jal x31, A
+nop
+nop
+nop
+nop
+
+A: 
+la x3, B
+lui x1, 0x12345
+nop
+nop
+jalr x30, x3
+nop
+nop
+nop
+jalr x0, x31
+nop
+nop
+nop
+
+B:
+auipc x2, 0x10000
+jalr x0, x30
+nop
+nop
+nop

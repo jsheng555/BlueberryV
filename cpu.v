@@ -169,7 +169,7 @@ module decode_stage(CLK, DE_V, DE_IR, DE_PC, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, 
                   (opcode == 7'b1101111) ? `J :
                   (opcode == 7'b1100111) ? `I :   
                   (opcode == 7'b0110111) ? `U : 
-                  (opcode == 7'b0010111) ? `I : `Q;
+                  (opcode == 7'b0010111) ? `U : `Q;
     assign imm = (type == `I) ? {{20{DE_IR[31]}}, DE_IR[31:20]} :
                  (type == `S) ? {{20{DE_IR[31]}}, DE_IR[31:25], DE_IR[11:7]} :
                  (type == `B) ? {{19{DE_IR[31]}}, DE_IR[31], DE_IR[7], DE_IR[30:25], DE_IR[11:8], 1'b0} :

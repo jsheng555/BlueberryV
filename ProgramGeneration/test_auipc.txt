@@ -1,0 +1,4 @@
+; test auipc
+nop
+nop
+auipc x1, 0x11111

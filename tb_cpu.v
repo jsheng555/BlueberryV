@@ -22,7 +22,7 @@ module cpu_tb();
             $display("\nCYCLE %d", i);
             `ifdef DEBUG_LATCHES
             $display("DE_PC: %x\tDE_IR: %x", CPU.DE_PC, CPU.DE_IR);
-            $display("EX_PC: %x\tEX_OP: %x\tEX_RS1: %x\tEX_RS2: %x\tEX_TYPE:", CPU.EX_PC, CPU.EX_OP, CPU.EX_RS1, CPU.EX_RS2, CPU.EX_TYPE);
+            $display("EX_PC: %x\tEX_OP: %x\tALU_A: %x\tALU_B: %x\tEX_TYPE:", CPU.EX_PC, CPU.EX_OP, CPU.ES.ALU_A, CPU.ES.ALU_B, CPU.EX_TYPE);
             $display("ME_ALU_RE: %x\tME_BRT: %x", CPU.ME_ALU_RE, CPU.ME_BRT);
             $display("WB_ALU_RE: %x\tWB_MEM_RE: %x", CPU.WB_ALU_RE, CPU.WB_MEM_RE);
             `endif

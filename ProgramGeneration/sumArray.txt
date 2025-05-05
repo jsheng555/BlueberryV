@@ -1,0 +1,18 @@
+; this program sums the first 20 8-bit signed integers from data memory and stores the result into x1.
+; x3 is the pointer to the data, x2 is the loop counter, x1 is the sum
+addi x2, x0, 20
+addi x3, x0, 0
+addi x1, x0, 0
+nop
+loop:
+beq x2, x0, done
+lb x4, 0(x3)
+addi x2, x2, -1
+nop
+addi x3, x3, 1
+add x1, x1, x4
+jal x0, loop
+nop
+nop
+nop
+done:
