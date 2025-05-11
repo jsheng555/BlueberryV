@@ -14,14 +14,12 @@ module register(CLK, RegW, DR, SR1, SR2, Reg_In, ReadReg1, ReadReg2);
   
   integer j;
   initial begin
-    for (j = 0 ; j < 32 ; j = j + 1) begin
-      // REG[j] = 32'h0000000;
-      REG[j] = j;
+    for (j = 1 ; j < 32 ; j = j + 1) begin
+      REG[j] = j; // Used for testing and to show that registers don't necessarily start as 0
     end
   end
 
-  always @(posedge CLK)
-  begin
+  always @(posedge CLK) begin
     if(RegW == 1'b1 && DR != 5'b00000) REG[DR] <= Reg_In[31:0];
     REG[0] <= 0; // x0 is hardwired to be 0
   end
