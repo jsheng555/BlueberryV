@@ -134,7 +134,10 @@ module decode_stage(CLK, DE_V, DE_IR, DE_PC, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, 
     output [4:0] Reg2;
     input [31:0] ReadReg1;
     input [31:0] ReadReg2;
+    
+    reg [2:0] typeLUT [0:31];
 
+    integer i;
     initial begin
         EX_V = 0;
         EX_IMM = 0;
@@ -148,6 +151,17 @@ module decode_stage(CLK, DE_V, DE_IR, DE_PC, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, 
         EX_TYPE = 0;
         EX_LINK = 0;
         EX_LD = 0;
+        
+        for (i = 0 ; i < 32 ; i = i + 1) typeLUT[i] = `Q; // default case
+        typeLUT[12] = `R;
+        typeLUT[4] = `I;
+        typeLUT[0] = `I;
+        typeLUT[8] = `S;
+        typeLUT[24] = `B;
+        typeLUT[27] = `J;
+        typeLUT[25] = `I;
+        typeLUT[13] = `U;
+        typeLUT[5] = `U;
     end
 
     // register file connections
@@ -156,20 +170,23 @@ module decode_stage(CLK, DE_V, DE_IR, DE_PC, EX_V, EX_IMM, EX_F3, EX_F7, EX_OP, 
 
     // internal signals
     wire [6:0] opcode;
+    wire [4:0] typeIndex;
     wire [2:0] type;
     wire [31:0] imm;
     wire link, ld;
 
     assign opcode = DE_IR[6:0];
-    assign type = (opcode == 7'b0110011) ? `R :
-                  (opcode == 7'b0010011) ? `I : 
-                  (opcode == 7'b0000011) ? `I : 
-                  (opcode == 7'b0100011) ? `S : 
-                  (opcode == 7'b1100011) ? `B :
-                  (opcode == 7'b1101111) ? `J :
-                  (opcode == 7'b1100111) ? `I :   
-                  (opcode == 7'b0110111) ? `U : 
-                  (opcode == 7'b0010111) ? `U : `Q;
+    assign typeIndex = opcode[6:2];
+    assign type = typeLUT[typeIndex];
+//    assign type = (opcode == 7'b0110011) ? `R :
+//                  (opcode == 7'b0010011) ? `I : 
+//                  (opcode == 7'b0000011) ? `I : 
+//                  (opcode == 7'b0100011) ? `S : 
+//                  (opcode == 7'b1100011) ? `B :
+//                  (opcode == 7'b1101111) ? `J :
+//                  (opcode == 7'b1100111) ? `I :   
+//                  (opcode == 7'b0110111) ? `U : 
+//                  (opcode == 7'b0010111) ? `U : `Q;
     assign imm = (type == `I) ? {{20{DE_IR[31]}}, DE_IR[31:20]} :
                  (type == `S) ? {{20{DE_IR[31]}}, DE_IR[31:25], DE_IR[11:7]} :
                  (type == `B) ? {{19{DE_IR[31]}}, DE_IR[31], DE_IR[7], DE_IR[30:25], DE_IR[11:8], 1'b0} :
