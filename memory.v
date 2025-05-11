@@ -1,3 +1,5 @@
+//`define SMALL_MEM
+
 module dataMemory(WE, CLK, ADDR, DATA_IN, DATA_SIZE, SIGNED, DATA_OUT);
     input WE;
     input CLK;
@@ -6,16 +8,26 @@ module dataMemory(WE, CLK, ADDR, DATA_IN, DATA_SIZE, SIGNED, DATA_OUT);
     input [1:0] DATA_SIZE; // 00 = byte, 01 = halfword, 10 = word
     input SIGNED; // 0 = unsigned, 1 = signed
     output reg [31:0] DATA_OUT;
-    reg [7:0] RAM [0:65535];
+    `ifdef SMALL_MEM  
+        reg [7:0] RAM [0:255];
+    `else
+        reg [7:0] RAM [0:65535];
+    `endif 
 
     // initialize memory with the data
     integer i;
-    initial
-    begin
-        for (i = 0 ; i < 65536 ; i = i+1) begin
-        RAM[i] = 8'h00;
-        end
-        $readmemh("data.mem", RAM);
+    initial begin
+        `ifdef SMALL_MEM
+            for (i = 0 ; i < 255 ; i = i+1) begin
+                RAM[i] = 8'h00;
+            end
+            $readmemh("data.mem", RAM);
+        `else
+            for (i = 0 ; i < 65536 ; i = i+1) begin
+                RAM[i] = 8'h00;
+            end
+            $readmemh("data.mem", RAM);
+        `endif
     end
 
     // actual memory logic
@@ -58,16 +70,26 @@ module instrMemory(CLK, ADDR, INSTR);
     input [15:0] ADDR;
     output reg [31:0] INSTR;
 
-    reg [7:0] RAM [0:65535];
+    `ifdef SMALL_MEM  
+        reg [7:0] RAM [0:255];
+    `else
+        reg [7:0] RAM [0:65535];
+    `endif 
 
     // initialize memory with the program
     integer i;
-    initial
-    begin
-        for (i = 0 ; i < 65536 ; i = i+1) begin
-        RAM[i] = 8'h00;
-        end
-        $readmemh("program.mem", RAM);
+    initial begin
+        `ifdef SMALL_MEM
+            for (i = 0 ; i < 255 ; i = i+1) begin
+                RAM[i] = 8'h00;
+            end
+            $readmemh("program.mem", RAM);
+        `else
+            for (i = 0 ; i < 65536 ; i = i+1) begin
+                RAM[i] = 8'h00;
+            end
+            $readmemh("program.mem", RAM);
+        `endif
     end
 
     // actual memory logic
